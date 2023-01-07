@@ -1,8 +1,11 @@
+using Autofac;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using StocksApp.Configurations;
+using StocksApp.Modules;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,7 +25,17 @@ namespace StocksApp
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddControllersWithViews();
+            services.Configure<Settings>(Configuration);
+            services.AddHttpContextAccessor();
+            services.AddHttpClient();
+            services.AddControllersWithViews().AddRazorRuntimeCompilation();
+            //Use Memory cache
+            services.AddMemoryCache();
+        }
+
+        public void ConfigureContainer(ContainerBuilder builder)
+        {
+            builder.RegisterModule(new DependencyInjectionModule());
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -46,7 +59,7 @@ namespace StocksApp
             {
                 endpoints.MapControllerRoute(
                     name: "default",
-                    pattern: "{controller=Home}/{action=Index}/{id?}");
+                    pattern: "{controller=Stocks}/{action=Index}/{id?}");
             });
         }
     }

@@ -1,4 +1,5 @@
-﻿<!DOCTYPE html>
+﻿@inject StocksApp.Session.SessionData sessionData;
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -6,6 +7,7 @@
     <title>@ViewData["Title"] - StocksApp</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" />
+
 </head>
 <body>
     <header>
@@ -43,6 +45,136 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+
+    <script>
+        var playUrl = '@Url.Action("Play", "Stocks")';
+
+        $(document).ready(function () {
+
+            $("#mega-contest").click(function () {
+                window.location.href = playUrl;
+            });
+
+            $(document).on('click', "p[id^='Graph_']", function () {
+                var graphUrl='@Url.Action("Graph", "Stocks")';
+                var stockname = this.id.split('_')[1];
+
+                graphUrl += '?companyName=' + stockname;
+                window.location.href = graphUrl;
+            });
+            var stockName;
+            var stockeCurrentPrice;
+
+            $(document).on('click', "p[id^='Add_']", function () {
+
+                var selectedStockID = this.id.split('_')[1];
+                var selectedValues = $("#hidden-play-div_" + selectedStockID)[0].innerHTML.split('=');
+                console.log(selectedValues);
+
+                 stockName = selectedValues[0];
+                 stockeCurrentPrice = selectedValues[1];
+                var stockTrend = selectedValues[2];
+
+                $("#StockName")[0].innerHTML = stockName;
+                $("#stockCurrentPrice")[0].innerHTML = stockeCurrentPrice;
+                $("#stockTrend")[0].innerHTML = stockTrend+"%";
+
+
+                $('#addStockModal').modal('show');
+                @*$.ajax({
+                    type: "GET",
+                    url: '@Url.Action("Add","Stocks")',
+                    async: false,
+                    //data: obj,
+                    contentType: "application/x-www-form-urlencoded;charset=UTF-8",
+                    success: function (result) {
+                        document.body.append(result);
+                    }
+
+                })*@
+            });
+
+            $('#stockQty').on('input', function () {
+                var currentStockPrice = $("#stockCurrentPrice")[0].innerHTML;
+                var qty = $("#stockQty").val();
+                $("#margin-used")[0].innerHTML = currentStockPrice * qty;
+            });
+
+            var orderJSON = {};
+            var selection = {};
+            var buyinfo = {};
+
+            var initialBudget =@sessionData.RemainingAmount;
+            var initialStockCount =@sessionData.TotalPickCount;
+
+            $("#addStockBtn").click(function () {
+                // Update the UI part
+                var newStocksSelectedQty = $("#stockQty").val();
+                var newStocksTotalPrice = $("#margin-used")[0].innerHTML;
+
+                $("#remainingBudget")[0].innerHTML = parseInt($("#remainingBudget")[0].innerHTML) - parseInt(newStocksTotalPrice);
+
+                $("#totalStocksCount")[0].innerHTML = parseInt($("#totalStocksCount")[0].innerHTML) + parseInt(newStocksSelectedQty);
+
+                //Form JSON
+                // Stock Name, Stock Price, Stock Count
+
+                var singleStock = { "buyprice": parseInt(stockeCurrentPrice), "quantity": parseInt(newStocksSelectedQty), "amount": parseInt(parseInt(newStocksSelectedQty) * parseInt(stockeCurrentPrice)) };
+                buyinfo[stockName] = singleStock;
+
+                // Call the post method to insert
+
+                $('#addStockModal').modal('hide');
+            });
+
+            $('body').on('click', '#submitContest', function () {
+                if ($("#totalStocksCount")[0].innerHTML == 0) {
+                    alert("Please select atleast 1 stock.");
+                    return;
+                }
+                var totalbuyamount = 0;
+                $.each(buyinfo, function (key, valueObj) {
+                    totalbuyamount += buyinfo[key]["amount"];
+                });
+
+
+                if (totalbuyamount > '@sessionData.RemainingAmount') {
+                    alert("You don't have sufficient balance to place this order.");
+                    $("#remainingBudget")[0].innerHTML = parseInt(initialBudget);
+                    $("#totalStocksCount")[0].innerHTML = initialStockCount;
+
+                    return;
+                }
+
+                selection["totalbuyamount"] = parseInt(totalbuyamount);
+                selection["buyinfo"] = buyinfo;
+
+                orderJSON["contestdate"] = '@ViewBag.ContestDate';
+                orderJSON["teamname"] = '@ViewBag.UserName';
+                orderJSON["selection"] = selection;
+
+                $.ajax({
+                    url: '@Url.Action("Contest","Stocks")',
+                    type: "Post",
+                    data: orderJSON,
+                    dataType: "application/json",
+                    success: function () {
+                        window.location.href = '@Url.Action("Confirm","Stocks")';
+                    },
+                    error: function() {
+                        $("#remainingBudget")[0].innerHTML = parseInt(initialBudget);
+                        $("#totalStocksCount")[0].innerHTML = initialStockCount;
+                        orderJSON = {};
+                        selection = {};
+                        buyinfo = {};
+                        window.location.href = '@Url.Action("Index","Stocks")';
+                    }
+                })
+            });
+
+        });
+    </script>
     @RenderSection("Scripts", required: false)
 </body>
 </html>

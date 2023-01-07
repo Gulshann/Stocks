@@ -1,0 +1,180 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+    <form>
+        <div class="form-row">
+            <div class="col">
+                <div class="form-control btn btn-primary div-btn">Upcoming</div>
+            </div>
+            <div class="col">
+                <div class="form-control btn btn-success div-btn">My Games</div>
+            </div>
+        </div>
+
+        <div class="card-section">
+            <div class="toggle-div" id="home-div">
+                <div class="card">
+                    <div class="container navbar-toggler" type="button" data-toggle="collapse" data-target=".card-collapse" aria-controls="navbarSupportedContent"
+                         aria-expanded="false" aria-label="Toggle navigation">
+                        <h5><b>Nifty 50</b></h5>
+                        <p class="para">Top 50 Stocks</p>
+                    </div>
+                </div>
+                <div class="card-collapse collapse d-sm-inline-flex flex-sm-row-reverse card-context-parent">
+                    <div class="card-contest">
+                        <div class="container">
+                            <h5><b>Mega Contest</b></h5>
+                            <div class="row-div">
+                                <p>Win 1L</p>
+                                <p class="card-expando">6100/100000</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-contest">
+                        <div class="container">
+                            <h5><b>Pro Contest</b></h5>
+                            <div class="row-div">
+                                <p>Win 1L</p>
+                                <p class="card-expando">6100/100000</p>
+                            </div>
+
+                        </div>
+                    </div>
+                    <div class="card-contest">
+                        <div class="container">
+                            <h5><b>Pro Contest</b></h5>
+                            <div class="row-div">
+                                <p>Win 1L</p>
+                                <p class="card-expando">6100/100000</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div  class="container navbar-toggler" type="button" data-toggle="collapse" data-target=".card-collapse1" aria-controls="navbarSupportedContent"
+                         aria-expanded="false" aria-label="Toggle navigation">
+                        <h5><b>Bank Nifty</b></h5>
+                        <p class="para">Bank Stocks</p>
+                    </div>
+                </div>
+                <div class="card-collapse1 collapse d-sm-inline-flex flex-sm-row-reverse card-context-parent">
+                    <div id="mega_nifty_50" class="card-contest">
+                        <div class="container">
+                            <h5><b>Mega Contest</b></h5>
+                            <div class="row-div">
+                                <p>Win 1L</p>
+                                <p class="card-expando">6100/100000</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-contest">
+                        <div class="container">
+                            <h5><b>Pro Contest</b></h5>
+                            <div class="row-div">
+                                <p>Win 1L</p>
+                                <p class="card-expando">6100/100000</p>
+                            </div>
+
+                        </div>
+                    </div>
+                    <div class="card-contest">
+                        <div class="container">
+                            <h5><b>Pro Contest</b></h5>
+                            <div class="row-div">
+                                <p>Win 1L</p>
+                                <p class="card-expando">6100/100000</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="container">
+                        <h5><b>Nifty Auto</b></h5>
+                        <p>Auto Stocks</p>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="container">
+                        <h5><b>Nifty Oil</b></h5>
+                        <p>Oil Stocks</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </form>
+    <script>
+        var playUrl = '@Url.Action("Play", "Stocks")'
+    </script>
+   
+
+    <style>
+       /* .para{
+            font-size:13px;
+        }*/
+
+        p{
+            font-size:13px;
+        }
+        .card-expando:hover {
+            /*height: 300px;*/
+        }
+
+        .card-expando {
+            margin-left: auto;
+            /*cursor:pointer;*/
+        }
+        .row-div {
+            display: flex;
+            flex-wrap: wrap;
+        }
+        .div-btn {
+            cursor: pointer;
+        }
+        .card-section {
+            margin-top: 30px;
+        }
+        .card {
+            box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+            transition: 0.3s;
+            width: 100%;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            /*transition: height 5s;*/
+            /*background-color:lightcoral;*/
+        }
+
+        .card-contest {
+            box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+            transition: 0.3s;
+            border-radius: 5px;
+            background-color: #354832;
+            margin: auto;
+            width: 95%;
+            margin-bottom: 5px;
+            color: white;
+            cursor:pointer;
+        }
+
+            .card-contest:hover {
+                box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2);
+            }
+
+        .card:hover {
+            box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2);
+        }
+
+        .container {
+            padding: 2px 16px;
+        }
+        .card-context-parent {
+            background: rgb(129, 129, 129);
+            border-radius: 5px;
+            padding-top: 4%;
+            padding-bottom: 4%;
+            margin-bottom:10%;
+        }
+
+    </style>
+}

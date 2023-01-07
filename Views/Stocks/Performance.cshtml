@@ -1,0 +1,116 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@model Dictionary<string, double>;
+@{
+
+    <div id="hidden-div-games">
+        @{
+            foreach (var item in Model)
+            {
+                <div style="display:none;">@item.Key=@item.Value</div>
+            }
+        }
+
+    </div>
+
+    <style>
+        #chartdiv {
+            width: 100%;
+            height: 300px;
+        }
+
+        .card-contest {
+            box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+            transition: 0.3s;
+            border-radius: 5px;
+            background-color: #ffd800;
+            margin: auto;
+            width: 95%;
+            margin-bottom: 5px;
+            color: black;
+            cursor: no-drop;
+            text-align:center;
+        }
+
+        .container {
+            padding: 2px 16px;
+        }
+    </style>
+
+    <!-- Resources -->
+    <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/percent.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+
+    <!-- Chart code -->
+    <script>
+        am5.ready(function () {
+
+            var data = [];
+
+            var hiddenDiv = $("#hidden-div-games");
+
+            $('#hidden-div-games').children('div').each(function () {
+                var item = this.innerHTML.split('=');
+                var stockName = item[0];
+                var stockCount = item[1];
+
+                var obj = { "category": stockName, "value": stockCount };
+                data.push(obj);
+            });
+
+            // Create root element
+            // https://www.amcharts.com/docs/v5/getting-started/#Root_element
+            var root = am5.Root.new("chartdiv");
+
+            // Set themes
+            // https://www.amcharts.com/docs/v5/concepts/themes/
+            root.setThemes([
+                am5themes_Animated.new(root)
+            ]);
+
+            // Create chart
+            // https://www.amcharts.com/docs/v5/charts/percent-charts/pie-chart/
+            var chart = root.container.children.push(
+                am5percent.PieChart.new(root, {
+                    endAngle: 270
+                })
+            );
+
+            // Create series
+            // https://www.amcharts.com/docs/v5/charts/percent-charts/pie-chart/#Series
+            var series = chart.series.push(
+                am5percent.PieSeries.new(root, {
+                    valueField: "value",
+                    categoryField: "category",
+                    endAngle: 270
+                })
+            );
+
+            series.states.create("hidden", {
+                endAngle: -90
+            });
+
+            // Set data
+            // https://www.amcharts.com/docs/v5/charts/percent-charts/pie-chart/#Setting_data
+            series.data.setAll(data);
+
+            series.appear(1000, 100);
+
+        }); // end am5.ready()
+    </script>
+
+    <div class="card-contest">
+        <div class="container">
+            <h5><b> @ViewBag.UserID </b></h5>
+            <div class="row-div">
+                <p>@ViewBag.ContestDate @ViewBag.ContestMonth</p>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- HTML -->
+    <div id="chartdiv"></div>
+}

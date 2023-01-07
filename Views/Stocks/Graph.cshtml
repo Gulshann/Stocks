@@ -1,0 +1,165 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+
+@model StocksApp.ViewModels.GraphViewModel;
+@{
+    <style>
+        #chartdiv {
+            width: 100%;
+            height: 450px;
+        }
+    </style>
+    
+
+    <!-- Resources -->
+    <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+
+    <!-- Chart code -->
+    <script>
+        am5.ready(function () {
+
+            var data = [];
+            var hiddenDiv = $("#hidden-graph-div");
+            $('#hidden-graph-div').children('div').each(function () {
+
+                var text = this.innerHTML.split('=');
+                var date1 = new Date(text[0].replace(/(\d{2})-(\d{2})-(\d{4})/, "$2/$1/$3"));
+                var value1 = text[1];
+                data.push({
+                    date: date1.getTime(),
+                    value: value1
+                    });
+            });
+            
+
+            // Create root element
+            // https://www.amcharts.com/docs/v5/getting-started/#Root_element
+            var root = am5.Root.new("chartdiv");
+
+            // Set themes
+            // https://www.amcharts.com/docs/v5/concepts/themes/
+            root.setThemes([
+                am5themes_Animated.new(root)
+            ]);
+
+            root.dateFormatter.setAll({
+                dateFields: ["valueX"]
+            });
+
+            // Create chart
+            // https://www.amcharts.com/docs/v5/charts/xy-chart/
+            var chart = root.container.children.push(
+                am5xy.XYChart.new(root, {
+                    focusable: true,
+                    panX: true,
+                    panY: true,
+                    wheelX: "panX",
+                    wheelY: "zoomX",
+                    pinchZoomX: true
+                })
+            );
+
+            // Create line series and related axes
+            var xAxis2 = chart.xAxes.push(
+                am5xy.DateAxis.new(root, {
+                    maxDeviation: 0.1,
+                    baseInterval: { timeUnit: "day", count: 1 },
+                    renderer: am5xy.AxisRendererX.new(root, {
+                        minGridDistance: 50
+                    })
+                })
+            );
+
+            var yAxis2 = chart.yAxes.push(
+                am5xy.ValueAxis.new(root, {
+                    maxDeviation: 0.1,
+                    renderer: am5xy.AxisRendererY.new(root, {}),
+                    min: 0,
+                    max: @Model.maxAxis+100,
+                })
+            );
+
+            var series1 = chart.series.push(
+                am5xy.LineSeries.new(root, {
+                    xAxis: xAxis2,
+                    yAxis: yAxis2,
+                    valueYField: "value",
+                    valueXField: "date",
+                    tooltip: am5.Tooltip.new(root, {
+                        pointerOrientation: "horizontal",
+                        labelText: "{valueY}"
+                    })
+                })
+            );
+
+            series1.strokes.template.setAll({
+                strokeWidth: 2
+            });
+
+            series1.data.setAll(generateDailyData());
+
+            // Create column series and related axes
+
+            var series2 = chart.series.unshift(
+                am5xy.ColumnSeries.new(root, {
+                    xAxis: xAxis2,
+                    yAxis: yAxis2,
+                    valueYField: "value",
+                    valueXField: "date",
+                    tooltip: am5.Tooltip.new(root, {
+                        pointerOrientation: "horizontal",
+                        labelText: "{valueY}"
+                    })
+                })
+            );
+
+            series2.data.setAll(generateDailyData());
+
+            // Add cursor
+            // https://www.amcharts.com/docs/v5/charts/xy-chart/cursor/
+            var cursor = chart.set("cursor", am5xy.XYCursor.new(root, {
+                xAxis: xAxis2
+            }));
+            cursor.lineY.set("visible", false);
+
+
+            // Make stuff animate on load
+            // https://www.amcharts.com/docs/v5/concepts/animations/
+            series1.appear(100, 10);
+            series2.appear(100, 10);
+            chart.appear(100, 10);
+
+            // Functions to generate random data
+            function generateDailyData() {
+                //var firstDate = new Date();
+                //firstDate.setDate(firstDate.getDate() - 7);
+                //firstDate.setHours(0, 0, 0, 0);
+                //var data = [];
+                //for (var i = 0; i < 10; i++) {
+                //    var newDate = new Date(firstDate);
+                //    newDate.setDate(newDate.getDate() + i);
+                //    data.push({
+                //        date: newDate.getTime(),
+                //        value: i*10
+                //    });
+                //}
+                console.log(data);
+                return data;
+
+            }
+
+        }); // end am5.ready()
+    </script>
+
+    <!-- HTML -->
+    <div id="chartdiv"></div>
+    <div id="hidden-graph-div" style="display:none;">
+        @foreach(var item in Model.stockPrice)
+            {
+                <div>@item.Key=@item.Value</div>
+            }
+    </div>
+}
