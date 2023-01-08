@@ -12,10 +12,15 @@
 
     <div class="form-row margin10">
         <div class="col">
-            <div class="form-control btn btn-primary div-btn">Budget : <span id="remainingBudget">@sessionData.RemainingAmount</span> </div>
+            <div class="form-control btn btn-primary div-btn"> <a style="color:white;" asp-action="Index" asp-controller="Stocks">Back</a> </div>
         </div>
         <div class="col">
             <div id="selectedStocks" style="cursor:pointer;" class="form-control btn btn-success div-btn @(sessionData.AlreadyParticipated?"disable-element":"")">Pick : <span id="totalStocksCount">@sessionData.TotalPickCount</span></div>
+        </div>
+    </div>
+    <div class="form-row margin10">
+        <div class="col">
+            <div class="div-btn" style="text-align:center; font-weight:bold; color:black;">Budget : <span id="remainingBudget">@sessionData.RemainingAmount</span> </div>
         </div>
     </div>
 
@@ -59,7 +64,7 @@
     }
 
 
-    @if (sessionData.AlreadyParticipated)
+    @if (sessionData.AlreadyParticipated || !Model.IsContestLive)
     {
         <a asp-action="Games" asp-controller="stocks" class="fixed-bottom btn btn-success btn-block custom-class">Portfolio</a>
     }

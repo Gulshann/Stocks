@@ -15,6 +15,17 @@
             @RenderBody()
         </main>
     </div>
+    @*<footer class="border-top footer text-muted">
+        <div class="container">
+            &copy; 2023 - StocksApp - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+            <br>
+            <a href="#" target="_blank"><img class="fa fa-facebook" src="~/images/facebook.svg"></a>
+            <a href="#" target="_blank"><img class="fa fa-twitter" src="~/images/twitter.svg"></a>
+            <a href="#" target="_blank"><img class="fa fa-linkedin" src="~/images/linkedin.svg"></a>
+            <a href="#" target="_blank"><img class="fa fa-instagram" src="~/images/instagram.svg"></a>
+        </div>
+
+    </footer>*@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
@@ -86,6 +97,8 @@
                 // Update the UI part
                 var newStocksSelectedQty = $("#stockQty").val();
                 var newStocksTotalPrice = $("#margin-used")[0].innerHTML;
+
+                $("#stockQty").val(0);
 
                 $("#remainingBudget")[0].innerHTML = parseInt($("#remainingBudget")[0].innerHTML) - parseInt(newStocksTotalPrice);
 

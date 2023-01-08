@@ -19,6 +19,8 @@ namespace StocksApp.ViewModels
         public Dictionary<string, double> stockPrices { get; set; }
 
         public Dictionary<string, double> profitList { get; set; }
+
+        public bool IsContestLive { get; set; }
     }
 
     public class GraphViewModel

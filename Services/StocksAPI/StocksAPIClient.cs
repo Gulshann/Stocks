@@ -36,9 +36,17 @@ namespace StocksApp.Services.StocksAPI
 
         public async Task<ContestStatus> GetFSLContestStatus()
         {
-            string url = _settings.StockBaseUrl + "getsflcontest";
-            _logger.LogInformation($"Calling API : {url}");
-            return await GetAsync<ContestStatus>(url);
+            try
+            {
+                string url = _settings.StockBaseUrl + "getsflcontest";
+                _logger.LogInformation($"Calling API : {url}");
+                return await GetAsync<ContestStatus>(url);
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
         }
 
         public async Task<ContestJoinInfo> JoinFSLContest(Order orderJSON)
@@ -75,64 +83,80 @@ namespace StocksApp.Services.StocksAPI
 
         public async Task<Dictionary<string, Contest>> GetFSLPreContestFeed()
         {
-            var todayDate = DateTime.Now.ToString("dd-MM-yyyy");
-            List<Contest> contestList = new List<Contest>();
-
-            string cacheKey = "contestfeed_" + todayDate;
-            var cacheResult = await _cacheService.GetAsync<Dictionary<string, Contest>>(cacheKey);
-
-            if (cacheResult != null)
+            try
             {
-                _logger.LogInformation($"{cacheKey} available in the cache.");
-                return cacheResult;
-            }
+                var todayDate = DateTime.Now.ToString("dd-MM-yyyy");
+                List<Contest> contestList = new List<Contest>();
 
-            _logger.LogInformation($"{cacheKey} is not available in the cache, so trying to get it from GetFSLPreContestFeed API.");
+                string cacheKey = "contestfeed_" + todayDate;
+                var cacheResult = await _cacheService.GetAsync<Dictionary<string, Contest>>(cacheKey);
 
-            string url = _settings.StockBaseUrl + "getsflprecontestfeed";
-            Dictionary<string, Contest> prevDayContest = new Dictionary<string, Contest>();
-
-            var date = DateTime.Now.AddDays(_settings.DayToShowGraphData).Date;
-
-            while (date <= DateTime.Now.Date.AddDays(_settings.FetchPreviousDays))
-            {
-                _logger.LogInformation($"GetFSLPreFeed data for date - {date.ToString("dd-MM-yyyy")}");
-
-                if (date.DayOfWeek != DayOfWeek.Saturday && date.DayOfWeek != DayOfWeek.Sunday)
+                if (cacheResult != null)
                 {
-                    _logger.LogInformation($"Calling API : {url}");
-
-                    var contestFeedData = await PostAsync<Contest>(url, date.ToString("dd-MM-yyyy"));
-
-                    prevDayContest.Add(date.ToString("dd-MM-yyyy"), contestFeedData);
+                    _logger.LogInformation($"{cacheKey} available in the cache.");
+                    return cacheResult;
                 }
-                date = date.AddDays(1);
+
+                _logger.LogInformation($"{cacheKey} is not available in the cache, so trying to get it from GetFSLPreContestFeed API.");
+
+                string url = _settings.StockBaseUrl + "getsflprecontestfeed";
+                Dictionary<string, Contest> prevDayContest = new Dictionary<string, Contest>();
+
+                var date = DateTime.Now.AddDays(_settings.DayToShowGraphData).Date;
+
+                while (date <= DateTime.Now.Date.AddDays(_settings.FetchPreviousDays))
+                {
+                    _logger.LogInformation($"GetFSLPreFeed data for date - {date.ToString("dd-MM-yyyy")}");
+
+                    if (date.DayOfWeek != DayOfWeek.Saturday && date.DayOfWeek != DayOfWeek.Sunday)
+                    {
+                        _logger.LogInformation($"Calling API : {url}");
+
+                        var contestFeedData = await PostAsync<Contest>(url, date.ToString("dd-MM-yyyy"));
+
+                        prevDayContest.Add(date.ToString("dd-MM-yyyy"), contestFeedData);
+                    }
+                    date = date.AddDays(1);
+                }
+
+                await _cacheService.InsertAsync(cacheKey, prevDayContest, _settings.CacheExpiryTimeinMin);
+
+                return prevDayContest;
             }
+            catch (Exception)
+            {
 
-            await _cacheService.InsertAsync(cacheKey, prevDayContest, _settings.CacheExpiryTimeinMin);
-
-            return prevDayContest;
+                throw;
+            }
         }
 
         public async Task<Leaderboard> GetSFLLeaderboard()
         {
-            var todayDate = DateTime.Now.AddDays(_settings.FetchPreviousDays).ToString("dd-MM-yyyy");
-
-            string cacheKey = "Leaderboard_" + todayDate;
-
-            var cacheResult = await _cacheService.GetAsync<Leaderboard>(cacheKey);
-            if (cacheResult != null)
+            try
             {
-                _logger.LogInformation($"{cacheKey} available in the cache.");
-                return cacheResult;
+                var todayDate = DateTime.Now.AddDays(_settings.FetchPreviousDays).ToString("dd-MM-yyyy");
+
+                //string cacheKey = "Leaderboard_" + todayDate;
+
+                //var cacheResult = await _cacheService.GetAsync<Leaderboard>(cacheKey);
+                //if (cacheResult != null)
+                //{
+                //    _logger.LogInformation($"{cacheKey} available in the cache.");
+                //    return cacheResult;
+                //}
+
+                //_logger.LogInformation($"{cacheKey} is not available in the cache.");
+
+                string url = _settings.StockBaseUrl + "getsflleaderboard";
+
+                _logger.LogInformation($"Calling API : {url}");
+                return await PostAsync<Leaderboard>(url, todayDate);
             }
+            catch (Exception)
+            {
 
-            _logger.LogInformation($"{cacheKey} is not available in the cache.");
-
-            string url = _settings.StockBaseUrl + "getsflleaderboard";
-
-            _logger.LogInformation($"Calling API : {url}");
-            return await PostAsync<Leaderboard>(url, todayDate);
+                throw;
+            }
         }
 
         public async Task<Team> GetSFLTeamScore(string teamname = "")
@@ -141,14 +165,15 @@ namespace StocksApp.Services.StocksAPI
 
             var todayDate = DateTime.Now.AddDays(_settings.FetchPreviousDays).ToString("dd-MM-yyyy");
 
-            string cacheKey = "teamScore_" + teamname + todayDate;
-            var cacheResult = await _cacheService.GetAsync<Team>(cacheKey);
+            //string cacheKey = "teamScore_" + teamname + todayDate;
+            //var cacheResult = await _cacheService.GetAsync<Team>(cacheKey);
 
-            if (cacheResult != null)
-            {
-                _logger.LogInformation($"{cacheKey} available in the cache.");
-                return cacheResult;
-            }
+            //if (cacheResult != null)
+            //{
+            //    _sessionData.Team = team;
+            //    _logger.LogInformation($"{cacheKey} available in the cache.");
+            //    return cacheResult;
+            //}
 
             //var jsonObject = @"{""contestdate"":""05-01-2023"",""teamname"":""sfluser1""}";
             string url = _settings.StockBaseUrl + "getsflteamscore";
@@ -172,8 +197,10 @@ namespace StocksApp.Services.StocksAPI
                 if (apiResponse.IsSuccessStatusCode)
                 {
                     team = this._serializer.Deserialize<Team>(responseAsString);
-                    await _cacheService.InsertAsync(cacheKey, team, _settings.CacheExpiryTimeinMin);
+                    //await _cacheService.InsertAsync(cacheKey, team, _settings.CacheExpiryTimeinMin);
                     _logger.LogInformation($"GetSFLTeamScore API response : {responseAsString}");
+
+                    _sessionData.Team = team;
                     return team;
                 }
                 _logger.LogInformation($"GetSFLTeamScore API response : {responseAsString}");

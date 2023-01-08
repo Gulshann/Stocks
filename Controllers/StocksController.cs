@@ -43,82 +43,107 @@ namespace StocksApp.Controllers
         public async Task<IActionResult> Index()
         {
 
-            _logger.LogInformation("Stocks Fantasy League home page.");
-            var todayDate = DateTime.Now.Date.AddDays(_settings.FetchPreviousDays);
-
-            _logger.LogInformation($"Current Date - {todayDate.ToString("dd-MM-yyyy")}");
-
-            var currentDateFeedData = await _stocksAPIClient.GetFSLPreContestFeed();
-
-            StocksFeedViewModel stocksFeedViewModel = new StocksFeedViewModel();
-            stocksFeedViewModel.date = todayDate.ToString("dd-MM-yyyy");
-
-            if (todayDate.DayOfWeek != DayOfWeek.Saturday && todayDate.DayOfWeek != DayOfWeek.Sunday)
+            try
             {
-                _logger.LogInformation($"Stock Market is operating today : {todayDate.DayOfWeek}");
-                stocksFeedViewModel.isHoliday = false;
-                stocksFeedViewModel.contest = currentDateFeedData[stocksFeedViewModel.date];
+                _logger.LogInformation("Stocks Fantasy League home page.");
+                var todayDate = DateTime.Now.Date.AddDays(_settings.FetchPreviousDays);
+
+                _logger.LogInformation($"Current Date - {todayDate.ToString("dd-MM-yyyy")}");
+
+                var currentDateFeedData = await _stocksAPIClient.GetFSLPreContestFeed();
+
+                StocksFeedViewModel stocksFeedViewModel = new StocksFeedViewModel();
+                stocksFeedViewModel.date = todayDate.ToString("dd-MM-yyyy");
+
+                if (todayDate.DayOfWeek != DayOfWeek.Saturday && todayDate.DayOfWeek != DayOfWeek.Sunday)
+                {
+                    _logger.LogInformation($"Stock Market is operating today : {todayDate.DayOfWeek}");
+                    stocksFeedViewModel.isHoliday = false;
+                    stocksFeedViewModel.contest = currentDateFeedData[stocksFeedViewModel.date];
+                }
+                else
+                {
+                    _logger.LogInformation($"Stock Market is closed today : {todayDate.DayOfWeek}");
+
+                    stocksFeedViewModel.isHoliday = true;
+                }
+
+                _logger.LogInformation($"Feed Data : {_serializer.Serialize<Dictionary<string, Contest>>(currentDateFeedData)}");
+
+                return View("home", stocksFeedViewModel);
             }
-            else
+            catch (Exception ex)
             {
-                _logger.LogInformation($"Stock Market is closed today : {todayDate.DayOfWeek}");
 
-                stocksFeedViewModel.isHoliday = true;
+                throw;
             }
-
-            _logger.LogInformation($"Feed Data : {_serializer.Serialize<Dictionary<string, Contest>>(currentDateFeedData)}");
-
-            return View("home", stocksFeedViewModel);
         }
 
         public async Task<IActionResult> Play()
         {
-            var todayDate = DateTime.Now.Date.AddDays(_settings.FetchPreviousDays);
-
-            _logger.LogInformation($"Play Contest : {todayDate.ToString("dd-MM-yyyy")}");
-
-            var currentDateFeedData = await _stocksAPIClient.GetFSLPreContestFeed();
-
-            _logger.LogInformation($"Feed Data : {_serializer.Serialize<Dictionary<string, Contest>>(currentDateFeedData)}");
-
-            List<DateTime> contestList = currentDateFeedData.Select(x => DateTime.ParseExact(x.Key, "dd-MM-yyyy", CultureInfo.InvariantCulture)).OrderByDescending(x => x.Date).ToList();
-            var prevDayStockPrices = currentDateFeedData[contestList[1].ToString("dd-MM-yyyy")];
-
-            PlayViewModel playViewModel = new PlayViewModel();
-            playViewModel.date = todayDate.ToString("dd-MM-yyyy");
-
-            playViewModel.stockPrices = currentDateFeedData[playViewModel.date].contestfeed.data;
-
-            Dictionary<string, double> profitDict = new Dictionary<string, double>();
-
-            string cacheKey = "Profit_" + playViewModel.date;
-
-            var cacheValue = await _cacheService.GetAsync<Dictionary<string, double>>(cacheKey);
-            if (cacheValue != null)
+            try
             {
-                _logger.LogInformation($"{cacheKey} is available in the cache.");
-                profitDict = cacheValue;
-            }
-            else
-            {
-                _logger.LogInformation($"{cacheKey} is not available in the cache so building it again.");
-                foreach (var item in playViewModel.stockPrices)
+                var todayDate = DateTime.Now.Date.AddDays(_settings.FetchPreviousDays);
+
+                _logger.LogInformation($"Play Contest : {todayDate.ToString("dd-MM-yyyy")}");
+
+                var currentDateFeedData = await _stocksAPIClient.GetFSLPreContestFeed();
+
+                _logger.LogInformation($"Feed Data : {_serializer.Serialize<Dictionary<string, Contest>>(currentDateFeedData)}");
+
+                List<DateTime> contestList = currentDateFeedData.Select(x => DateTime.ParseExact(x.Key, "dd-MM-yyyy", CultureInfo.InvariantCulture)).OrderByDescending(x => x.Date).ToList();
+                var prevDayStockPrices = currentDateFeedData[contestList[1].ToString("dd-MM-yyyy")];
+
+                PlayViewModel playViewModel = new PlayViewModel();
+                playViewModel.date = todayDate.ToString("dd-MM-yyyy");
+
+                playViewModel.stockPrices = currentDateFeedData[playViewModel.date].contestfeed.data;
+
+                Dictionary<string, double> profitDict = new Dictionary<string, double>();
+
+                string cacheKey = "Profit_" + playViewModel.date;
+
+                var contestDetail = await _stocksAPIClient.GetFSLContestStatus();
+                if(contestDetail.status!="success" || contestDetail.contestdate != playViewModel.date)
                 {
-                    double prevPrice = prevDayStockPrices.contestfeed.data[item.Key];
-                    double priceDiff = item.Value - prevPrice;
-                    double changePercentage = (priceDiff * 100 / prevPrice);
-                    profitDict.Add(item.Key, Math.Round(changePercentage, 2));
+                    playViewModel.IsContestLive = false;
+                }
+                else
+                {
+                    playViewModel.IsContestLive = true;
                 }
 
-                await _cacheService.InsertAsync(cacheKey, profitDict, _settings.CacheExpiryTimeinMin);
+                var cacheValue = await _cacheService.GetAsync<Dictionary<string, double>>(cacheKey);
+                if (cacheValue != null)
+                {
+                    _logger.LogInformation($"{cacheKey} is available in the cache.");
+                    profitDict = cacheValue;
+                }
+                else
+                {
+                    _logger.LogInformation($"{cacheKey} is not available in the cache so building it again.");
+                    foreach (var item in playViewModel.stockPrices)
+                    {
+                        double prevPrice = prevDayStockPrices.contestfeed.data[item.Key];
+                        double priceDiff = item.Value - prevPrice;
+                        double changePercentage = (priceDiff * 100 / prevPrice);
+                        profitDict.Add(item.Key, Math.Round(changePercentage, 2));
+                    }
+
+                    await _cacheService.InsertAsync(cacheKey, profitDict, _settings.CacheExpiryTimeinMin);
+                }
+
+                playViewModel.profitList = profitDict;
+
+                ViewBag.ContestDate = playViewModel.date;
+                ViewBag.UserName = "user";
+
+                return View(playViewModel);
             }
-
-            playViewModel.profitList = profitDict;
-
-            ViewBag.ContestDate = playViewModel.date;
-            ViewBag.UserName = "user";
-
-            return View(playViewModel);
+            catch (Exception ex)
+            {
+                return RedirectToAction("Index");
+            }
         }
 
         [HttpPost]
@@ -128,6 +153,9 @@ namespace StocksApp.Controllers
 
             if (res.status == "success")
             {
+                //Refreshing the session data.
+                await _stocksAPIClient.GetSFLTeamScore();
+
                 return Json(res);
             }
             return null;
@@ -140,122 +168,157 @@ namespace StocksApp.Controllers
 
         public async Task<IActionResult> Games()
         {
-            var todayDate = DateTime.Now.Date.AddDays(_settings.FetchPreviousDays);
-            LearboardViewModel learboardViewModel = new LearboardViewModel();
-
-            Team team = new Team();
-            if (_sessionData.Team.teamscore != null)
+            try
             {
-                team = _sessionData.Team;
+                var todayDate = DateTime.Now.Date.AddDays(_settings.FetchPreviousDays);
+                LearboardViewModel learboardViewModel = new LearboardViewModel();
+
+                Team team = new Team();
+                if (_sessionData.Team.teamscore != null)
+                {
+                    team = _sessionData.Team;
+                }
+                else
+                {
+                    await _stocksAPIClient.GetSFLTeamScore();
+                }
+
+                learboardViewModel.Team = team;
+
+                learboardViewModel.Leaderboard = await _stocksAPIClient.GetSFLLeaderboard();
+
+                string cacheKey = "Profit_" + DateTime.Now.Date.AddDays(_settings.FetchPreviousDays).ToString("dd-MM-yyyy");
+
+                var cacheResult = await _cacheService.GetAsync<Dictionary<string, double>>(cacheKey);
+                if (cacheResult != null)
+                {
+                    learboardViewModel.profitList = cacheResult;
+                }
+                else
+                {
+                    learboardViewModel.profitList = await PopulateDict();
+                }
+
+                ViewBag.ContestDate = DateTime.Now.Date.AddDays(_settings.FetchPreviousDays).Day;
+                ViewBag.ContestMonth = DateTime.Now.Date.AddDays(_settings.FetchPreviousDays).ToString("MMM");
+
+                return View(learboardViewModel);
             }
-            else
+            catch (Exception)
             {
-                await _stocksAPIClient.GetSFLTeamScore();
+                return RedirectToAction("Index");
             }
-
-            learboardViewModel.Team = team;
-
-            learboardViewModel.Leaderboard = await _stocksAPIClient.GetSFLLeaderboard();
-
-            string cacheKey = "Profit_" + DateTime.Now.Date.AddDays(_settings.FetchPreviousDays).ToString("dd-MM-yyyy");
-
-            var cacheResult = await _cacheService.GetAsync<Dictionary<string, double>>(cacheKey);
-            if (cacheResult != null)
-            {
-                learboardViewModel.profitList = cacheResult;
-            }
-            else
-            {
-                learboardViewModel.profitList = await PopulateDict();
-            }
-
-            ViewBag.ContestDate = DateTime.Now.Date.AddDays(_settings.FetchPreviousDays).Day;
-            ViewBag.ContestMonth = DateTime.Now.Date.AddDays(_settings.FetchPreviousDays).ToString("MMM");
-
-            return View(learboardViewModel);
         }
 
         public async Task<IActionResult> Performance(string teamname)
         {
-            var team = await _stocksAPIClient.GetSFLTeamScore(teamname);
 
-            List<StockTrend> stockTrend = new List<StockTrend>();
-
-            foreach (var item in team.teamscore.stockinfo.Keys)
+            //TODO - In case of a non active teamnam, we should not allow to show this page.
+            try
             {
-                StockTrend st = new StockTrend();
-                st.StockName = item;
-                st.CurrentAmount = team.teamscore.stockinfo[item].currentamount;
-                st.BuyAmount = team.teamscore.stockinfo[item].quantity * team.teamscore.stockinfo[item].buyprice;
-                st.Quantity = (int)(team.teamscore.stockinfo[item].quantity);
-                st.Profit = Math.Round(((st.CurrentAmount - st.BuyAmount) * 100) / st.BuyAmount, 2);
-                stockTrend.Add(st);
+                var team = await _stocksAPIClient.GetSFLTeamScore(teamname);
+
+                if (team.teamscore == null)
+                {
+                    return RedirectToAction("Index");
+                }
+
+                List<StockTrend> stockTrend = new List<StockTrend>();
+
+                foreach (var item in team.teamscore.stockinfo.Keys)
+                {
+                    StockTrend st = new StockTrend();
+                    st.StockName = item;
+                    st.CurrentAmount = team.teamscore.stockinfo[item].currentamount;
+                    st.BuyAmount = team.teamscore.stockinfo[item].quantity * team.teamscore.stockinfo[item].buyprice;
+                    st.Quantity = (int)(team.teamscore.stockinfo[item].quantity);
+                    st.Profit = Math.Round(((st.CurrentAmount - st.BuyAmount) * 100) / st.BuyAmount, 2);
+                    stockTrend.Add(st);
+                }
+
+                ViewBag.UserID = teamname;
+                ViewBag.ContestDate = DateTime.Now.Date.AddDays(_settings.FetchPreviousDays).Day;
+                ViewBag.ContestMonth = DateTime.Now.Date.AddDays(_settings.FetchPreviousDays).ToString("MMM");
+
+                //var serializeData = _serializer.Serialize<Dictionary<string, int>>(tempDict);
+
+                return View(stockTrend);
             }
-
-            ViewBag.UserID = teamname;
-            ViewBag.ContestDate = DateTime.Now.Date.AddDays(_settings.FetchPreviousDays).Day;
-            ViewBag.ContestMonth = DateTime.Now.Date.AddDays(_settings.FetchPreviousDays).ToString("MMM");
-
-            //var serializeData = _serializer.Serialize<Dictionary<string, int>>(tempDict);
-
-            return View(stockTrend);
+            catch (Exception)
+            {
+                return RedirectToAction("Index");
+            }
         }
 
         private async Task<Dictionary<string, double>> PopulateDict()
         {
-            var todayDate = DateTime.Now.Date.AddDays(_settings.FetchPreviousDays);
-            var currentDateFeedData = await _stocksAPIClient.GetFSLPreContestFeed();
-
-            List<DateTime> contestList = currentDateFeedData.Select(x => DateTime.ParseExact(x.Key, "dd-MM-yyyy", CultureInfo.InvariantCulture)).OrderByDescending(x => x.Date).ToList();
-            var prevDayStockPrices = currentDateFeedData[contestList[1].ToString("dd-MM-yyyy")];
-
-            var stockPriceList = currentDateFeedData[todayDate.ToString("dd-MM-yyyy")].contestfeed.data;
-
-            Dictionary<string, double> profitDict = new Dictionary<string, double>();
-
-            string cacheKey = "Profit_" + todayDate.ToString("dd-MM-yyyy");
-
-            var cacheValue = await _cacheService.GetAsync<Dictionary<string, double>>(cacheKey);
-            if (cacheValue != null)
+            try
             {
-                profitDict = cacheValue;
-            }
-            else
-            {
-                foreach (var item in stockPriceList)
+                var todayDate = DateTime.Now.Date.AddDays(_settings.FetchPreviousDays);
+                var currentDateFeedData = await _stocksAPIClient.GetFSLPreContestFeed();
+
+                List<DateTime> contestList = currentDateFeedData.Select(x => DateTime.ParseExact(x.Key, "dd-MM-yyyy", CultureInfo.InvariantCulture)).OrderByDescending(x => x.Date).ToList();
+                var prevDayStockPrices = currentDateFeedData[contestList[1].ToString("dd-MM-yyyy")];
+
+                var stockPriceList = currentDateFeedData[todayDate.ToString("dd-MM-yyyy")].contestfeed.data;
+
+                Dictionary<string, double> profitDict = new Dictionary<string, double>();
+
+                string cacheKey = "Profit_" + todayDate.ToString("dd-MM-yyyy");
+
+                var cacheValue = await _cacheService.GetAsync<Dictionary<string, double>>(cacheKey);
+                if (cacheValue != null)
                 {
-                    double prevPrice = prevDayStockPrices.contestfeed.data[item.Key];
-                    double priceDiff = item.Value - prevPrice;
-                    double changePercentage = (priceDiff * 100 / prevPrice);
-                    profitDict.Add(item.Key, Math.Round(changePercentage, 2));
+                    profitDict = cacheValue;
+                }
+                else
+                {
+                    foreach (var item in stockPriceList)
+                    {
+                        double prevPrice = prevDayStockPrices.contestfeed.data[item.Key];
+                        double priceDiff = item.Value - prevPrice;
+                        double changePercentage = (priceDiff * 100 / prevPrice);
+                        profitDict.Add(item.Key, Math.Round(changePercentage, 2));
+                    }
+
+                    await _cacheService.InsertAsync(cacheKey, profitDict, _settings.CacheExpiryTimeinMin);
                 }
 
-                await _cacheService.InsertAsync(cacheKey, profitDict, _settings.CacheExpiryTimeinMin);
+                return profitDict;
             }
-
-            return profitDict;
+            catch (Exception)
+            {
+                throw;
+            }
         }
 
         public async Task<IActionResult> Graph(string companyName)
         {
-            var currentDateFeedData = await _stocksAPIClient.GetFSLPreContestFeed();
-            Dictionary<string, double> priceList = new Dictionary<string, double>();
-            foreach (var item in currentDateFeedData)
+            try
             {
-                if (item.Value.status == "success" && item.Value.contestfeed.data.ContainsKey(companyName))
+                var currentDateFeedData = await _stocksAPIClient.GetFSLPreContestFeed();
+                Dictionary<string, double> priceList = new Dictionary<string, double>();
+                foreach (var item in currentDateFeedData)
                 {
-                    var price = item.Value.contestfeed.data[companyName];
-                    priceList.Add(item.Key, price);
+                    if (item.Value.status == "success" && item.Value.contestfeed.data.ContainsKey(companyName))
+                    {
+                        var price = item.Value.contestfeed.data[companyName];
+                        priceList.Add(item.Key, price);
+                    }
                 }
+
+                GraphViewModel graphViewModel = new GraphViewModel();
+                graphViewModel.companyName = companyName;
+                graphViewModel.stockPrice = priceList;
+
+                graphViewModel.maxAxis = priceList.Count > 0 ? priceList.Select(x => x.Value).Max() : 100;
+                ViewBag.StockName = companyName;
+                return View(graphViewModel);
             }
-
-            GraphViewModel graphViewModel = new GraphViewModel();
-            graphViewModel.companyName = companyName;
-            graphViewModel.stockPrice = priceList;
-
-            graphViewModel.maxAxis = priceList.Count > 0 ? priceList.Select(x => x.Value).Max() : 100;
-            ViewBag.StockName = companyName;
-            return View(graphViewModel);
+            catch (Exception)
+            {
+                return RedirectToAction("Index");
+            }
         }
 
     }

@@ -20,7 +20,7 @@
         <div class="container">
             <a href="@Url.Action("Performance", "Stocks", new { teamname = sesssionData.UserID })"><h6><b>@sesssionData.UserID</b></h6></a>
             <div class="row-div">
-                <p style="margin-left:auto">@sesssionData.Team.teamscore.cdate</p>
+                <p style="margin-left:auto">@sesssionData.ContestDate</p>
                 <p class="profit-div" style="margin-left:auto">
                     Rank - @sesssionData.Team.rank
                 </p>
