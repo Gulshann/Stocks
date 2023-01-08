@@ -294,3 +294,9 @@
 2023-01-08 18:24:25.3015 Info Validating config: TargetNames=alldata, ConfigItems=20, FilePath=C:\Hackathon-Onmobile\StocksApp\bin\Debug\netcoreapp3.1\NLog.config
 2023-01-08 18:24:25.3173 Info Configuration initialized.
 2023-01-08 18:24:25.3369 Info NLog, Version=5.0.0.0, Culture=neutral, PublicKeyToken=5120e14c03d0593c. File version: 5.1.1.1522. Product version: 5.1.1+b1175f1ad0ce4a4a9d1f4b61538202071d7be513. GlobalAssemblyCache: False
+2023-01-08 18:34:34.5748 Info Message Template Auto Format enabled
+2023-01-08 18:34:34.6056 Info Loading assembly: NLog.Web.AspNetCore
+2023-01-08 18:34:34.7680 Info Registered target NLog.Targets.FileTarget(Name=alldata)
+2023-01-08 18:34:34.8080 Info Validating config: TargetNames=alldata, ConfigItems=20, FilePath=C:\Hackathon-Onmobile\StocksApp\bin\Debug\netcoreapp3.1\NLog.config
+2023-01-08 18:34:34.8291 Info Configuration initialized.
+2023-01-08 18:34:34.8504 Info NLog, Version=5.0.0.0, Culture=neutral, PublicKeyToken=5120e14c03d0593c. File version: 5.1.1.1522. Product version: 5.1.1+b1175f1ad0ce4a4a9d1f4b61538202071d7be513. GlobalAssemblyCache: False
