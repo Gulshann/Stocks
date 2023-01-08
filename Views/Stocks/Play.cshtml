@@ -5,9 +5,20 @@
 @inject StocksApp.Session.SessionData sessionData;
 @{
     ViewBag.UserName = sessionData.UserID;
-    <div class="col">
-        <div class="form-control btn btn-primary div-btn">Mega Contest</div>
+
+    @*<div class="card-header">
+        <div class="container">
+            <div class="col">
+                <div>Mega Contest</div>
+            </div>
+
+        </div>
+    </div>*@
+
+    <div class="header">
+        <h3>Mega Contest</h3>
     </div>
+
     <div class="form-row margin10">
         <div class="col">
             <div class="form-control btn btn-primary div-btn">Budget : <span id="remainingBudget">@sessionData.RemainingAmount</span> </div>
@@ -192,15 +203,24 @@
             margin: 5%;
         }
 
-        .custom-class{
-            height:7%;
-            width:90%;
-            margin-left:5%;
-            border-top-left-radius:20px;
-            border-top-right-radius:20px;
+        .custom-class {
+            height: 7%;
+            width: 90%;
+            margin-left: 5%;
+            border-top-left-radius: 20px;
+            border-top-right-radius: 20px;
         }
-        .custom-class:hover{
-            cursor:pointer;
+
+            .custom-class:hover {
+                cursor: pointer;
+            }
+
+        .header {
+            padding: 5px;
+            text-align: center;
+            background: #1abc9c;
+            color: white;
+            font-size: 30px;
         }
     </style>
 }

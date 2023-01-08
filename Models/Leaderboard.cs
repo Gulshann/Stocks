@@ -125,4 +125,13 @@ namespace StocksApp.Models
     }
 
 
+    public class StockTrend
+    {
+        public string StockName { get; set; }
+        public double BuyAmount { get; set; }
+        public double CurrentAmount { get; set; }
+        public int Quantity { get; set; }
+        public double Profit { get; set; }
+    }
+
 }

@@ -1,14 +1,15 @@
 ﻿@*
     For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 *@
-@model Dictionary<string, double>;
+@*@model Dictionary<string, double>;*@
+@model List<StockTrend>;
 @{
 
     <div id="hidden-div-games">
         @{
             foreach (var item in Model)
             {
-                <div style="display:none;">@item.Key=@item.Value</div>
+                <div style="display:none;">@item.StockName=@item.BuyAmount=@item.CurrentAmount</div>
             }
         }
 
@@ -30,11 +31,51 @@
             margin-bottom: 5px;
             color: black;
             cursor: no-drop;
-            text-align:center;
+            text-align: center;
         }
 
         .container {
             padding: 2px 16px;
+        }
+
+        .header {
+            padding: 5px;
+            text-align: center;
+            background: #1abc9c;
+            color: white;
+            font-size: 30px;
+        }
+
+        #customers {
+            font-family: Arial, Helvetica, sans-serif;
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+            #customers td, #customers th {
+                border: 1px solid #ddd;
+                padding: 3px;
+            }
+
+            #customers tr:nth-child(even) {
+                background-color: #f2f2f2;
+            }
+
+            #customers tr:hover {
+                background-color: #ddd;
+            }
+
+            #customers th {
+                padding-top: 5px;
+                padding-bottom: 5px;
+                text-align: left;
+                background-color: #0069d9;
+                color: white;
+            }
+
+        .table-class {
+            margin-top: 20px;
+            padding: 5px;
         }
     </style>
 
@@ -43,7 +84,7 @@
     <script src="https://cdn.amcharts.com/lib/5/percent.js"></script>
     <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
 
-    <!-- Chart code -->
+
     <script>
         am5.ready(function () {
 
@@ -53,13 +94,13 @@
 
             $('#hidden-div-games').children('div').each(function () {
                 var item = this.innerHTML.split('=');
-                var stockName = item[0];
-                var stockCount = item[1];
+                var Stock = item[0];
+                var BuyPrice = item[1];
+                var CurrentPrice = item[2];
 
-                var obj = { "category": stockName, "value": stockCount };
+                var obj = { "Stock": Stock, "BuyPrice": BuyPrice, "CurrentPrice": CurrentPrice };
                 data.push(obj);
             });
-
             // Create root element
             // https://www.amcharts.com/docs/v5/getting-started/#Root_element
             var root = am5.Root.new("chartdiv");
@@ -72,43 +113,97 @@
 
             // Create chart
             // https://www.amcharts.com/docs/v5/charts/percent-charts/pie-chart/
-            var chart = root.container.children.push(
-                am5percent.PieChart.new(root, {
-                    endAngle: 270
-                })
-            );
+            // start and end angle must be set both for chart and series
+            var chart = root.container.children.push(am5percent.PieChart.new(root, {
+                layout: root.verticalLayout,
+                innerRadius: am5.percent(40)
+            }));
 
             // Create series
             // https://www.amcharts.com/docs/v5/charts/percent-charts/pie-chart/#Series
-            var series = chart.series.push(
-                am5percent.PieSeries.new(root, {
-                    valueField: "value",
-                    categoryField: "category",
-                    endAngle: 270
-                })
-            );
+            // start and end angle must be set both for chart and series
+            var series0 = chart.series.push(am5percent.PieSeries.new(root, {
+                valueField: "BuyPrice",
+                categoryField: "Stock",
+                alignLabels: false
+            }));
 
-            series.states.create("hidden", {
-                endAngle: -90
+            var bgColor = root.interfaceColors.get("background");
+
+            series0.ticks.template.setAll({ forceHidden: true });
+            series0.labels.template.setAll({ forceHidden: true });
+            series0.slices.template.setAll({
+                stroke: bgColor,
+                strokeWidth: 2,
+                tooltipText:
+                    "{category}: {valuePercentTotal.formatNumber('0.00')}% ({value} BuyPrice)"
             });
+            series0.slices.template.states.create("hover", { scale: 0.95 });
 
+            var series1 = chart.series.push(am5percent.PieSeries.new(root, {
+                valueField: "CurrentPrice",
+                categoryField: "Stock",
+                alignLabels: true
+            }));
+
+            series1.slices.template.setAll({
+                stroke: bgColor,
+                strokeWidth: 2,
+                tooltipText:
+                    "{category}: {valuePercentTotal.formatNumber('0.00')}% ({value} CurrentPrice)"
+            });
             // Set data
             // https://www.amcharts.com/docs/v5/charts/percent-charts/pie-chart/#Setting_data
-            series.data.setAll(data);
+            series0.data.setAll(data);
+            series1.data.setAll(data);
 
-            series.appear(1000, 100);
+            // Play initial series animation
+            // https://www.amcharts.com/docs/v5/concepts/animations/#Animation_of_series
+            series0.appear(1000, 100);
+            series1.appear(1000, 100);
 
         }); // end am5.ready()
     </script>
 
-    <div class="card-contest">
-        <div class="container">
-            <h5><b> @ViewBag.UserID </b></h5>
-            <div class="row-div">
-                <p>@ViewBag.ContestDate @ViewBag.ContestMonth</p>
-            </div>
-
+    <div class="header">
+        <h5><b> @ViewBag.UserID </b></h5>
+        <div class="row-div">
+            <p>@ViewBag.ContestDate @ViewBag.ContestMonth</p>
         </div>
+    </div>
+
+    <div class="form-row table-class">
+        <table id="customers">
+            <tr>
+                <th>StockName</th>
+                <th>Quantity</th>
+                <th>Buy Amount</th>
+                <th>Current Amount</th>
+                <th>Profit</th>
+            </tr>
+            @{
+
+                foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@item.StockName</td>
+                        <td>@item.Quantity</td>
+                        <td>@item.BuyAmount</td>
+                        <td>@item.CurrentAmount</td>
+                        @{
+                            if (item.Profit >= 0)
+                            {
+                                <td style="color:green;"> @item.Profit </td>
+                            }
+                            else
+                            {
+                                <td style="color:red;"> @item.Profit </td>
+                            }
+                        }
+                    </tr>
+                }
+            }
+        </table>
     </div>
 
     <!-- HTML -->

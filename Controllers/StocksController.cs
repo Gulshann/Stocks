@@ -75,7 +75,7 @@ namespace StocksApp.Controllers
             string cacheKey = "Profit_" + playViewModel.date;
 
             var cacheValue = await _cacheService.GetAsync<Dictionary<string, double>>(cacheKey);
-            if (cacheKey != null)
+            if (cacheValue != null)
             {
                 profitDict = cacheValue;
             }
@@ -158,11 +158,16 @@ namespace StocksApp.Controllers
         {
             var team = await _stocksAPIClient.GetSFLTeamScore(teamname);
 
-            Dictionary<string, double> tempDict = new Dictionary<string, double>();
+            List<StockTrend> stockTrend = new List<StockTrend>();
 
             foreach(var item in team.teamscore.stockinfo.Keys) {
-                var totalAmount= team.teamscore.stockinfo[item].quantity * team.teamscore.stockinfo[item].currentprice;
-                tempDict.Add(item, totalAmount);
+                StockTrend st = new StockTrend();
+                st.StockName = item;
+                st.CurrentAmount = team.teamscore.stockinfo[item].currentamount;
+                st.BuyAmount = team.teamscore.stockinfo[item].quantity * team.teamscore.stockinfo[item].buyprice;
+                st.Quantity = team.teamscore.stockinfo[item].quantity;
+                st.Profit= Math.Round(((st.CurrentAmount - st.BuyAmount)*100)/ st.BuyAmount,2);
+                stockTrend.Add(st);
             }
 
             ViewBag.UserID = teamname;
@@ -171,7 +176,7 @@ namespace StocksApp.Controllers
 
             //var serializeData = _serializer.Serialize<Dictionary<string, int>>(tempDict);
 
-            return View(tempDict);
+            return View(stockTrend);
         }
 
         private async Task<Dictionary<string, double>> PopulateDict()
@@ -189,7 +194,7 @@ namespace StocksApp.Controllers
             string cacheKey = "Profit_" + todayDate.ToShortDateString();
 
             var cacheValue = await _cacheService.GetAsync<Dictionary<string, double>>(cacheKey);
-            if (cacheKey != null)
+            if (cacheValue != null)
             {
                 profitDict = cacheValue;
             }

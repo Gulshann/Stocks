@@ -1,21 +1,19 @@
 ﻿@*
     For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 *@
+@using StocksApp.Session;
 @model StocksApp.ViewModels.LearboardViewModel;
+@inject SessionData sesssionData; 
 @{
 
-    <div class="card-contest">
+    @*<div class="card-contest">
         <div class="container">
             <h5><b>  Nifty 50 Mega Contest @ViewBag.ContestDate @ViewBag.ContestMonth </b></h5>
         </div>
-    </div>
-    <div class="form-row">
-        <div class="col">
-            <div class="form-control btn btn-primary div-btn">Leaderboard</div>
-        </div>
-        <div class="col">
-            <div class="form-control btn btn-success div-btn">Stocks Stats</div>
-        </div>
+    </div>*@
+
+    <div class="header">
+        <h4><b>  Nifty 50 Mega Contest @ViewBag.ContestDate @ViewBag.ContestMonth </b></h4>
     </div>
 
     <div class="form-row table-class">
@@ -29,7 +27,7 @@
 
                 foreach (var item in Model.Leaderboard.leaderboard)
                 {
-                    <tr>
+                    <tr class="@(item.member==sesssionData.UserID ? "current-user":"")">
                         <td><a href="@Url.Action("Performance", "Stocks", new { teamname = item.member})">@item.member</a></td>
                         <td>@item.score</td>
                         <td>@item.rank</td>
@@ -66,12 +64,13 @@
                 padding-top: 12px;
                 padding-bottom: 12px;
                 text-align: left;
-                background-color: #D65E2E;
+                background-color: #0069d9;
                 color: white;
             }
 
         .table-class {
             margin-top: 20px;
+            padding:5px;
         }
 
         .card-contest {
@@ -89,6 +88,18 @@
 
         .container {
             padding: 2px 16px;
+        }
+
+        .header {
+            padding: 5px;
+            text-align: center;
+            background: #1abc9c;
+            color: white;
+            font-size: 30px;
+        }
+
+        .current-user {
+            background-color: #fab7b7 !important;
         }
     </style>
 }

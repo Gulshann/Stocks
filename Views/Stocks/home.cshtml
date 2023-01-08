@@ -4,14 +4,16 @@
 @model StocksApp.ViewModels.StocksFeedViewModel;
 
 @{
-
+    <div class="header">
+        <h3>Stock Fantasy League</h3>
+    </div>
 
     <div class="form-row">
         <div class="col">
             <div class="form-control btn btn-primary div-btn">Upcoming</div>
         </div>
         <div class="col">
-            <div class="form-control btn btn-success div-btn">My Games</div>
+            <a asp-controller="Stocks" asp-action="Games" class="form-control btn btn-success div-btn">My Games</a>
         </div>
     </div>
     if (!Model.isHoliday)
@@ -239,6 +241,7 @@
             color: white;
             cursor: no-drop;
         }
+
         .live-contest {
             background-color: #218838;
             cursor: pointer;
@@ -262,6 +265,15 @@
             padding-top: 4%;
             padding-bottom: 4%;
             margin-bottom: 10%;
+        }
+
+        .header {
+            padding: 5px;
+            text-align: center;
+            background: #1abc9c;
+            color: white;
+            font-size: 30px;
+            margin-bottom:20px;
         }
     </style>
 }
