@@ -1,0 +1,10 @@
+version: '3.4'
+
+services:
+  stock:
+    build:
+      context: .
+    ports:
+      - "80:5000"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development

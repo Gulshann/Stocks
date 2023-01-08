@@ -68,7 +68,7 @@ namespace StocksApp.Models
     public class Stockinfo
     {
         public double buyprice { get; set; }
-        public int quantity { get; set; }
+        public double quantity { get; set; }
         public double amount { get; set; }
         public double currentprice { get; set; }
         public double currentamount { get; set; }

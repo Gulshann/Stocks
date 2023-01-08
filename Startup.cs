@@ -10,6 +10,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using NLog.Web;
+using Microsoft.Extensions.Logging;
+
 
 namespace StocksApp
 {
@@ -31,6 +34,13 @@ namespace StocksApp
             services.AddControllersWithViews().AddRazorRuntimeCompilation();
             //Use Memory cache
             services.AddMemoryCache();
+
+            //services.AddLogging(options =>
+            //{
+            //    options.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Trace);
+            //    options.AddNLog("nlog.config");
+            //});
+
         }
 
         public void ConfigureContainer(ContainerBuilder builder)

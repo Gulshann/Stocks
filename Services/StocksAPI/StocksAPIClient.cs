@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
 using StocksApp.Configurations;
 using StocksApp.Models;
@@ -16,14 +17,16 @@ namespace StocksApp.Services.StocksAPI
 {
     public class StocksAPIClient : IStocksAPIClient
     {
+        private readonly ILogger<StocksAPIClient> _logger;
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly ISerializer _serializer;
         private readonly ICacheService _cacheService;
         private readonly SessionData _sessionData;
         private readonly Settings _settings;
 
-        public StocksAPIClient(IHttpClientFactory httpClientFactory, ISerializer serializer, IOptions<Settings> options, ICacheService cacheService, SessionData sessionData)
+        public StocksAPIClient(ILogger<StocksAPIClient> logger, IHttpClientFactory httpClientFactory, ISerializer serializer, IOptions<Settings> options, ICacheService cacheService, SessionData sessionData)
         {
+            this._logger = logger;
             this._httpClientFactory = httpClientFactory;
             this._serializer = serializer;
             this._cacheService = cacheService;
@@ -34,6 +37,7 @@ namespace StocksApp.Services.StocksAPI
         public async Task<ContestStatus> GetFSLContestStatus()
         {
             string url = _settings.StockBaseUrl + "getsflcontest";
+            _logger.LogInformation($"Calling API : {url}");
             return await GetAsync<ContestStatus>(url);
         }
 
@@ -55,8 +59,11 @@ namespace StocksApp.Services.StocksAPI
 
                 if (apiResponse.IsSuccessStatusCode)
                 {
+                    _logger.LogInformation($"JoinFSLContest Response - {responseAsString}");
+
                     return this._serializer.Deserialize<ContestJoinInfo>(responseAsString);
                 }
+                _logger.LogInformation($"JoinFSLContest Response - {responseAsString}");
 
                 throw new HttpRequestException(apiResponse?.ReasonPhrase);
             }
@@ -68,7 +75,7 @@ namespace StocksApp.Services.StocksAPI
 
         public async Task<Dictionary<string, Contest>> GetFSLPreContestFeed()
         {
-            var todayDate = DateTime.Now.ToShortDateString();
+            var todayDate = DateTime.Now.ToString("dd-MM-yyyy");
             List<Contest> contestList = new List<Contest>();
 
             string cacheKey = "contestfeed_" + todayDate;
@@ -76,23 +83,28 @@ namespace StocksApp.Services.StocksAPI
 
             if (cacheResult != null)
             {
+                _logger.LogInformation($"{cacheKey} available in the cache.");
                 return cacheResult;
             }
+
+            _logger.LogInformation($"{cacheKey} is not available in the cache, so trying to get it from GetFSLPreContestFeed API.");
 
             string url = _settings.StockBaseUrl + "getsflprecontestfeed";
             Dictionary<string, Contest> prevDayContest = new Dictionary<string, Contest>();
 
-
             var date = DateTime.Now.AddDays(_settings.DayToShowGraphData).Date;
-
 
             while (date <= DateTime.Now.Date.AddDays(_settings.FetchPreviousDays))
             {
+                _logger.LogInformation($"GetFSLPreFeed data for date - {date.ToString("dd-MM-yyyy")}");
+
                 if (date.DayOfWeek != DayOfWeek.Saturday && date.DayOfWeek != DayOfWeek.Sunday)
                 {
-                    var contestFeedData = await PostAsync<Contest>(url, date.ToShortDateString());
+                    _logger.LogInformation($"Calling API : {url}");
 
-                    prevDayContest.Add(date.ToShortDateString(), contestFeedData);
+                    var contestFeedData = await PostAsync<Contest>(url, date.ToString("dd-MM-yyyy"));
+
+                    prevDayContest.Add(date.ToString("dd-MM-yyyy"), contestFeedData);
                 }
                 date = date.AddDays(1);
             }
@@ -104,17 +116,22 @@ namespace StocksApp.Services.StocksAPI
 
         public async Task<Leaderboard> GetSFLLeaderboard()
         {
-            var todayDate = DateTime.Now.AddDays(_settings.FetchPreviousDays).ToShortDateString();
+            var todayDate = DateTime.Now.AddDays(_settings.FetchPreviousDays).ToString("dd-MM-yyyy");
 
             string cacheKey = "Leaderboard_" + todayDate;
 
             var cacheResult = await _cacheService.GetAsync<Leaderboard>(cacheKey);
             if (cacheResult != null)
             {
+                _logger.LogInformation($"{cacheKey} available in the cache.");
                 return cacheResult;
             }
 
+            _logger.LogInformation($"{cacheKey} is not available in the cache.");
+
             string url = _settings.StockBaseUrl + "getsflleaderboard";
+
+            _logger.LogInformation($"Calling API : {url}");
             return await PostAsync<Leaderboard>(url, todayDate);
         }
 
@@ -122,13 +139,14 @@ namespace StocksApp.Services.StocksAPI
         {
             Team team = new Team();
 
-            var todayDate = DateTime.Now.AddDays(_settings.FetchPreviousDays).ToShortDateString();
+            var todayDate = DateTime.Now.AddDays(_settings.FetchPreviousDays).ToString("dd-MM-yyyy");
 
             string cacheKey = "teamScore_" + teamname + todayDate;
             var cacheResult = await _cacheService.GetAsync<Team>(cacheKey);
 
             if (cacheResult != null)
             {
+                _logger.LogInformation($"{cacheKey} available in the cache.");
                 return cacheResult;
             }
 
@@ -139,7 +157,7 @@ namespace StocksApp.Services.StocksAPI
                 TeamInfo teamInfo = new TeamInfo()
                 {
                     teamname = !string.IsNullOrEmpty(teamname) ? teamname : _sessionData.UserID,
-                    contestdate = DateTime.Now.Date.AddDays(_settings.FetchPreviousDays).ToShortDateString()
+                    contestdate = DateTime.Now.Date.AddDays(_settings.FetchPreviousDays).ToString("dd-MM-yyyy")
                 };
                 var jsonObject = _serializer.Serialize<TeamInfo>(teamInfo);
 
@@ -155,9 +173,10 @@ namespace StocksApp.Services.StocksAPI
                 {
                     team = this._serializer.Deserialize<Team>(responseAsString);
                     await _cacheService.InsertAsync(cacheKey, team, _settings.CacheExpiryTimeinMin);
+                    _logger.LogInformation($"GetSFLTeamScore API response : {responseAsString}");
                     return team;
                 }
-
+                _logger.LogInformation($"GetSFLTeamScore API response : {responseAsString}");
                 throw new HttpRequestException(apiResponse?.ReasonPhrase);
             }
             catch (Exception ex)
@@ -178,6 +197,8 @@ namespace StocksApp.Services.StocksAPI
 
                 if (apiResponse.IsSuccessStatusCode)
                 {
+                    _logger.LogInformation($" API response : {responseAsString}");
+
                     return this._serializer.Deserialize<T>(responseAsString);
                 }
 
@@ -209,6 +230,7 @@ namespace StocksApp.Services.StocksAPI
 
                 if (apiResponse.IsSuccessStatusCode)
                 {
+                    _logger.LogInformation($"API response : {responseAsString}");
                     return this._serializer.Deserialize<T>(responseAsString);
                 }
 

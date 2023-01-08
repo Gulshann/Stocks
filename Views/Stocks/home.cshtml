@@ -2,6 +2,8 @@
     For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 *@
 @model StocksApp.ViewModels.StocksFeedViewModel;
+@using StocksApp.Session;
+@inject SessionData sessionData;
 
 @{
     <div class="header">
@@ -30,11 +32,19 @@
                         </div>
                     </div>
                     <div class="card-collapse collapse d-sm-inline-flex flex-sm-row-reverse card-context-parent">
-                        <div id="mega-contest" class="card-contest live-contest">
+                        <div id="mega-contest" class="card-contest @(sessionData.AlreadyParticipated?"participated-contest":"live-contest")">
                             <div class="container">
                                 <h5><b>Mega Contest</b></h5>
                                 <div class="row-div">
                                     <p>Win 1L</p>
+                                    @if (sessionData.AlreadyParticipated)
+                                    {
+                                        <p style="margin-left:auto">Already Participated</p>
+                                    }
+                                    else
+                                    {
+                                        <p style="margin-left:auto">Live</p>
+                                    }
                                     <p class="card-expando">6100/100000</p>
                                 </div>
                             </div>
@@ -189,7 +199,7 @@
 
 
 
-    <style>
+<style>
         /* .para{
             font-size:13px;
         }*/
@@ -247,6 +257,11 @@
             cursor: pointer;
         }
 
+        .participated-contest {
+            background-color: orange;
+            cursor: pointer;
+        }
+
         .card-contest:hover {
             box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2);
         }
@@ -273,7 +288,187 @@
             background: #1abc9c;
             color: white;
             font-size: 30px;
-            margin-bottom:20px;
+            margin-bottom: 20px;
+            margin-top: -3%;
+            margin-left: -10%;
+            margin-right: -10%;
         }
-    </style>
+
+        /* Home Page
+----------------------------------------------------*/
+/* .para{
+            font-size:13px;
+        }*/
+
+/*p {
+    font-size: 13px;
+}
+
+.card-expando:hover {*/
+    /*height: 300px;*/
+/*}
+
+.card-expando {
+    margin-left: auto;*/
+    /*cursor:pointer;*/
+/*}
+
+.row-div {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.div-btn {
+    cursor: pointer;
+}
+
+.card-section {
+    margin-top: 30px;
+}
+
+.card {
+    box-shadow: 0 4px 10px 0px rgb(0 0 0 / 20%);
+    transition: 0.3s;
+    width: 100%;
+    border-radius: 5px;
+    margin-bottom: 24px;*/
+    /*transition: height 5s;*/
+    /*background-color:lightcoral;*/
+/*}
+
+.card-contest {
+    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+    transition: 0.3s;
+    border-radius: 5px;
+    background-color: #417e37;
+    margin: auto;
+    width: 95%;
+    margin-bottom: 5px;
+    color: white;
+    cursor: pointer;
+}
+
+    .card-contest:hover {
+        box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2);
+    }
+
+.card:hover {
+    box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2);
+}
+
+.container {
+    padding: 2px 16px;
+}
+
+.card-context-parent {
+    background: rgb(129 129 129 / 31%);
+    border-radius: 5px;
+    padding-top: 4%;
+    padding-bottom: 4%;
+    margin-bottom: 10%;
+}
+
+.navbar-brand {
+    font-size: 2.5rem;
+}
+
+.navbar-nav {
+    display: flex;
+    flex-direction: row;
+    padding-left: 0;
+    margin-bottom: 0;
+    list-style: none;
+}
+
+    .navbar-nav .nav-link {
+        padding-right: 2rem;
+        padding-left: 0;
+        font-size: 1.5rem;
+    }
+
+.form-row > .col {
+    padding-right: 5px;
+    padding-left: 5px;
+    box-shadow: 0 4px 8px 0 #28a74578;
+}
+
+.btn {
+    font-size: 1.3rem;
+}
+
+.para {
+    font-size: 1rem;
+}
+
+.h5, h5 {
+    font-size: 1.3rem;
+}
+
+.detail {
+    font-size: 1rem;
+    color: var(--yellow);
+    font-weight: bold;
+}
+
+
+
+.typecompleated {
+    font-size: 1.2rem;
+    color: var(--green);
+    font-weight: bold;
+}
+
+.typeupcoming {
+    font-size: 1.2rem;
+    color: var(--red);
+    font-weight: bold;
+}
+
+.typelive {
+    font-size: 1.2rem;
+    color: var(--yellow);
+    font-weight: bold;
+}
+
+.flex-display {
+    display: flex;
+    flex-direction: row;
+}
+
+.card-contestlead {
+    box-shadow: 0 4px 8px 0 var(--green);
+    transition: 0.3s;
+    border-radius: 16px;
+    background-color: transparent;
+    margin: auto;
+    width: 45%;
+    margin-bottom: 5px;
+    color: white;
+    cursor: pointer;
+}
+
+.col-stock {
+    box-shadow: 0 4px 8px 0 var(--green);
+    transition: 0.3s;
+    border-radius: 16px;
+    background-color: transparent;
+    margin: auto;
+    width: 45%;
+    margin-bottom: 5px;
+    color: white;
+    cursor: pointer;
+}
+
+.c-stock {
+    box-shadow: 0 4px 8px 0 var(--green);
+    transition: 0.3s;
+    border-radius: 16px;
+    background-color: transparent;
+    margin: auto;
+    width: 45%;
+    margin-bottom: 5px;
+    color: white;
+    cursor: pointer;
+}*/
+</style>
 }

@@ -15,5 +15,7 @@ namespace StocksApp.Session
         public Team Team { get; set; }
         public Order Order { get; set; }
         public int TotalPickCount { get; set; }
+        public bool AlreadyParticipated { get; set; }
+        public string ContestDate { get; set; }
     }
 }

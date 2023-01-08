@@ -3,40 +3,59 @@
 *@
 @using StocksApp.Session;
 @model StocksApp.ViewModels.LearboardViewModel;
-@inject SessionData sesssionData; 
+@inject SessionData sesssionData;
 @{
 
     @*<div class="card-contest">
-        <div class="container">
-            <h5><b>  Nifty 50 Mega Contest @ViewBag.ContestDate @ViewBag.ContestMonth </b></h5>
-        </div>
-    </div>*@
+            <div class="container">
+                <h5><b>  Nifty 50 Mega Contest @ViewBag.ContestDate @ViewBag.ContestMonth </b></h5>
+            </div>
+        </div>*@
 
     <div class="header">
         <h4><b>  Nifty 50 Mega Contest @ViewBag.ContestDate @ViewBag.ContestMonth </b></h4>
     </div>
 
-    <div class="form-row table-class">
-        <table id="customers">
-            <tr>
-                <th>User</th>
-                <th>Profit</th>
-                <th>Rank</th>
-            </tr>
-            @{
-
-                foreach (var item in Model.Leaderboard.leaderboard)
-                {
-                    <tr class="@(item.member==sesssionData.UserID ? "current-user":"")">
-                        <td><a href="@Url.Action("Performance", "Stocks", new { teamname = item.member})">@item.member</a></td>
-                        <td>@item.score</td>
-                        <td>@item.rank</td>
-                    </tr>
-                }
-            }
-        </table>
+    <div class="card" style="margin-top:5%;">
+        <div class="container">
+            <a href="@Url.Action("Performance", "Stocks", new { teamname = sesssionData.UserID })"><h6><b>@sesssionData.UserID</b></h6></a>
+            <div class="row-div">
+                <p style="margin-left:auto">@sesssionData.Team.teamscore.cdate</p>
+                <p class="profit-div" style="margin-left:auto">
+                    Rank - @sesssionData.Team.rank
+                </p>
+            </div>
+        </div>
     </div>
 
+    <div class="card">
+        <div class="container navbar-toggler" type="button"
+             aria-expanded="false" aria-label="Toggle navigation" style="margin-bottom: -6%;">
+            <h5><b>Leader Board </b></h5>
+        </div>
+        <div class="form-row table-class">
+            <table id="customers">
+                <tr>
+                    <th>User</th>
+                    <th>Profit</th>
+                    <th>Rank</th>
+                </tr>
+                @{
+
+                    foreach (var item in Model.Leaderboard.leaderboard)
+                    {
+                        <tr>
+                            <td><a href="@Url.Action("Performance", "Stocks", new { teamname = item.member})">@item.member</a></td>
+                            <td>@item.score</td>
+                            <td>@item.rank</td>
+                        </tr>
+                    }
+                }
+            </table>
+        </div>
+    </div>
+    
+    <div class="text-center"><a id="contBtn" href="/">Continue</a></div>
 
 
 
@@ -70,7 +89,7 @@
 
         .table-class {
             margin-top: 20px;
-            padding:5px;
+            padding: 5px;
         }
 
         .card-contest {
@@ -96,10 +115,51 @@
             background: #1abc9c;
             color: white;
             font-size: 30px;
+            margin-top: -4%;
+            margin-left: -5%;
+            margin-right: -5%;
         }
 
         .current-user {
             background-color: #fab7b7 !important;
         }
+
+        .card {
+            box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+            transition: 0.3s;
+            width: 100%;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            /*transition: height 5s;*/
+        }
+
+        #contBtn {
+            position: relative;
+            top: 1.5em;
+            font-size: 1.6em;
+            text-decoration: none;
+            background: #8bc34ad6;
+            color: #fff;
+            margin: auto;
+            padding: .8em 3em;
+            -webkit-box-shadow: 0px 15px 30px rgba(50, 50, 50, 0.21);
+            -moz-box-shadow: 0px 15px 30px rgba(50, 50, 50, 0.21);
+            box-shadow: 0px 15px 30px rgba(50, 50, 50, 0.21);
+            border-radius: 25px;
+            -webkit-transition: all .4s ease;
+            -moz-transition: all .4s ease;
+            -o-transition: all .4s ease;
+            transition: all .4s ease;
+        }
+
+            #contBtn:hover {
+                -webkit-box-shadow: 0px 15px 30px rgba(50, 50, 50, 0.41);
+                -moz-box-shadow: 0px 15px 30px rgba(50, 50, 50, 0.41);
+                box-shadow: 0px 15px 30px rgba(50, 50, 50, 0.41);
+                -webkit-transition: all .4s ease;
+                -moz-transition: all .4s ease;
+                -o-transition: all .4s ease;
+                transition: all .4s ease;
+            }
     </style>
 }

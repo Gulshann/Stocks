@@ -24,7 +24,6 @@ namespace StocksApp.Filters
         }
         public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
         {
-
             await PopulateSessionData();
 
             await next();
@@ -44,13 +43,17 @@ namespace StocksApp.Filters
                 _sessionData.RemainingAmount = _settings.TotalAmount - _sessionData.Team.teamscore.totalbuyamount;
                 if (_sessionData.Team.teamscore.stockinfo.Count > 0)
                 {
-                   _sessionData.TotalPickCount = _sessionData.Team.teamscore.stockinfo.Select(x => x.Value).Sum(x => x.quantity);
+                   _sessionData.TotalPickCount =(int)_sessionData.Team.teamscore.stockinfo.Select(x => x.Value).Sum(x => x.quantity);
+                    _sessionData.AlreadyParticipated = true;
+                    _sessionData.ContestDate = _sessionData.Team.teamscore.cdate;
                 }
             }
             else
             {
                 _sessionData.RemainingAmount = _settings.TotalAmount;
                 _sessionData.TotalPickCount = 0;
+                _sessionData.AlreadyParticipated = false;
+                _sessionData.ContestDate = DateTime.Now.Date.AddDays(_settings.FetchPreviousDays).ToString("dd-MM-yyyy");
             }
         }
     }

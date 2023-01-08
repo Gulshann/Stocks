@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using StocksApp.Configurations;
 using StocksApp.Filters;
@@ -10,6 +11,7 @@ using StocksApp.Session;
 using StocksApp.ViewModels;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -19,6 +21,7 @@ namespace StocksApp.Controllers
     [ServiceFilter(typeof(CustomBaseFilter))]
     public class StocksController : Controller
     {
+        private readonly ILogger<StocksController> _logger;
         private readonly IStocksAPIClient _stocksAPIClient;
         private readonly ISerializer _serializer;
         private readonly IOptions<Settings> options;
@@ -26,8 +29,9 @@ namespace StocksApp.Controllers
         private readonly ICacheService _cacheService;
         private readonly Settings _settings;
 
-        public StocksController(IStocksAPIClient stocksAPIClient, ISerializer serializer, IOptions<Settings> options, SessionData sessionData, ICacheService cacheService)
+        public StocksController(ILogger<StocksController> logger, IStocksAPIClient stocksAPIClient, ISerializer serializer, IOptions<Settings> options, SessionData sessionData, ICacheService cacheService)
         {
+            this._logger = logger;
             this._stocksAPIClient = stocksAPIClient;
             this._serializer = serializer;
             this.options = options;
@@ -38,21 +42,31 @@ namespace StocksApp.Controllers
 
         public async Task<IActionResult> Index()
         {
+
+            _logger.LogInformation("Stocks Fantasy League home page.");
             var todayDate = DateTime.Now.Date.AddDays(_settings.FetchPreviousDays);
+
+            _logger.LogInformation($"Current Date - {todayDate.ToString("dd-MM-yyyy")}");
+
             var currentDateFeedData = await _stocksAPIClient.GetFSLPreContestFeed();
 
             StocksFeedViewModel stocksFeedViewModel = new StocksFeedViewModel();
-            stocksFeedViewModel.date = todayDate.ToShortDateString();
+            stocksFeedViewModel.date = todayDate.ToString("dd-MM-yyyy");
 
             if (todayDate.DayOfWeek != DayOfWeek.Saturday && todayDate.DayOfWeek != DayOfWeek.Sunday)
             {
+                _logger.LogInformation($"Stock Market is operating today : {todayDate.DayOfWeek}");
                 stocksFeedViewModel.isHoliday = false;
                 stocksFeedViewModel.contest = currentDateFeedData[stocksFeedViewModel.date];
             }
             else
             {
+                _logger.LogInformation($"Stock Market is closed today : {todayDate.DayOfWeek}");
+
                 stocksFeedViewModel.isHoliday = true;
             }
+
+            _logger.LogInformation($"Feed Data : {_serializer.Serialize<Dictionary<string, Contest>>(currentDateFeedData)}");
 
             return View("home", stocksFeedViewModel);
         }
@@ -60,13 +74,18 @@ namespace StocksApp.Controllers
         public async Task<IActionResult> Play()
         {
             var todayDate = DateTime.Now.Date.AddDays(_settings.FetchPreviousDays);
+
+            _logger.LogInformation($"Play Contest : {todayDate.ToString("dd-MM-yyyy")}");
+
             var currentDateFeedData = await _stocksAPIClient.GetFSLPreContestFeed();
 
-            List<DateTime> contestList = currentDateFeedData.Select(x => DateTime.Parse(x.Key)).OrderByDescending(x => x.Date).ToList();
-            var prevDayStockPrices = currentDateFeedData[contestList[1].ToShortDateString()];
+            _logger.LogInformation($"Feed Data : {_serializer.Serialize<Dictionary<string, Contest>>(currentDateFeedData)}");
+
+            List<DateTime> contestList = currentDateFeedData.Select(x => DateTime.ParseExact(x.Key, "dd-MM-yyyy", CultureInfo.InvariantCulture)).OrderByDescending(x => x.Date).ToList();
+            var prevDayStockPrices = currentDateFeedData[contestList[1].ToString("dd-MM-yyyy")];
 
             PlayViewModel playViewModel = new PlayViewModel();
-            playViewModel.date = todayDate.ToShortDateString();
+            playViewModel.date = todayDate.ToString("dd-MM-yyyy");
 
             playViewModel.stockPrices = currentDateFeedData[playViewModel.date].contestfeed.data;
 
@@ -77,10 +96,12 @@ namespace StocksApp.Controllers
             var cacheValue = await _cacheService.GetAsync<Dictionary<string, double>>(cacheKey);
             if (cacheValue != null)
             {
+                _logger.LogInformation($"{cacheKey} is available in the cache.");
                 profitDict = cacheValue;
             }
             else
             {
+                _logger.LogInformation($"{cacheKey} is not available in the cache so building it again.");
                 foreach (var item in playViewModel.stockPrices)
                 {
                     double prevPrice = prevDayStockPrices.contestfeed.data[item.Key];
@@ -103,11 +124,11 @@ namespace StocksApp.Controllers
         [HttpPost]
         public async Task<IActionResult> Contest(Order orderJSON)
         {
-            var res=await _stocksAPIClient.JoinFSLContest(orderJSON);
+            var res = await _stocksAPIClient.JoinFSLContest(orderJSON);
 
             if (res.status == "success")
             {
-                return Ok(res);
+                return Json(res);
             }
             return null;
         }
@@ -136,7 +157,7 @@ namespace StocksApp.Controllers
 
             learboardViewModel.Leaderboard = await _stocksAPIClient.GetSFLLeaderboard();
 
-            string cacheKey = "Profit_" + DateTime.Now.Date.AddDays(_settings.FetchPreviousDays).ToShortDateString();
+            string cacheKey = "Profit_" + DateTime.Now.Date.AddDays(_settings.FetchPreviousDays).ToString("dd-MM-yyyy");
 
             var cacheResult = await _cacheService.GetAsync<Dictionary<string, double>>(cacheKey);
             if (cacheResult != null)
@@ -145,10 +166,10 @@ namespace StocksApp.Controllers
             }
             else
             {
-                learboardViewModel.profitList= await PopulateDict();
+                learboardViewModel.profitList = await PopulateDict();
             }
 
-            ViewBag.ContestDate= DateTime.Now.Date.AddDays(_settings.FetchPreviousDays).Day;
+            ViewBag.ContestDate = DateTime.Now.Date.AddDays(_settings.FetchPreviousDays).Day;
             ViewBag.ContestMonth = DateTime.Now.Date.AddDays(_settings.FetchPreviousDays).ToString("MMM");
 
             return View(learboardViewModel);
@@ -160,13 +181,14 @@ namespace StocksApp.Controllers
 
             List<StockTrend> stockTrend = new List<StockTrend>();
 
-            foreach(var item in team.teamscore.stockinfo.Keys) {
+            foreach (var item in team.teamscore.stockinfo.Keys)
+            {
                 StockTrend st = new StockTrend();
                 st.StockName = item;
                 st.CurrentAmount = team.teamscore.stockinfo[item].currentamount;
                 st.BuyAmount = team.teamscore.stockinfo[item].quantity * team.teamscore.stockinfo[item].buyprice;
-                st.Quantity = team.teamscore.stockinfo[item].quantity;
-                st.Profit= Math.Round(((st.CurrentAmount - st.BuyAmount)*100)/ st.BuyAmount,2);
+                st.Quantity = (int)(team.teamscore.stockinfo[item].quantity);
+                st.Profit = Math.Round(((st.CurrentAmount - st.BuyAmount) * 100) / st.BuyAmount, 2);
                 stockTrend.Add(st);
             }
 
@@ -184,14 +206,14 @@ namespace StocksApp.Controllers
             var todayDate = DateTime.Now.Date.AddDays(_settings.FetchPreviousDays);
             var currentDateFeedData = await _stocksAPIClient.GetFSLPreContestFeed();
 
-            List<DateTime> contestList = currentDateFeedData.Select(x => DateTime.Parse(x.Key)).OrderByDescending(x => x.Date).ToList();
-            var prevDayStockPrices = currentDateFeedData[contestList[1].ToShortDateString()];
+            List<DateTime> contestList = currentDateFeedData.Select(x => DateTime.ParseExact(x.Key, "dd-MM-yyyy", CultureInfo.InvariantCulture)).OrderByDescending(x => x.Date).ToList();
+            var prevDayStockPrices = currentDateFeedData[contestList[1].ToString("dd-MM-yyyy")];
 
-            var stockPriceList = currentDateFeedData[todayDate.ToShortDateString()].contestfeed.data;
+            var stockPriceList = currentDateFeedData[todayDate.ToString("dd-MM-yyyy")].contestfeed.data;
 
             Dictionary<string, double> profitDict = new Dictionary<string, double>();
 
-            string cacheKey = "Profit_" + todayDate.ToShortDateString();
+            string cacheKey = "Profit_" + todayDate.ToString("dd-MM-yyyy");
 
             var cacheValue = await _cacheService.GetAsync<Dictionary<string, double>>(cacheKey);
             if (cacheValue != null)
@@ -232,7 +254,7 @@ namespace StocksApp.Controllers
             graphViewModel.stockPrice = priceList;
 
             graphViewModel.maxAxis = priceList.Count > 0 ? priceList.Select(x => x.Value).Max() : 100;
-
+            ViewBag.StockName = companyName;
             return View(graphViewModel);
         }
 

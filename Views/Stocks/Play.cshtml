@@ -6,15 +6,6 @@
 @{
     ViewBag.UserName = sessionData.UserID;
 
-    @*<div class="card-header">
-        <div class="container">
-            <div class="col">
-                <div>Mega Contest</div>
-            </div>
-
-        </div>
-    </div>*@
-
     <div class="header">
         <h3>Mega Contest</h3>
     </div>
@@ -24,7 +15,7 @@
             <div class="form-control btn btn-primary div-btn">Budget : <span id="remainingBudget">@sessionData.RemainingAmount</span> </div>
         </div>
         <div class="col">
-            <div class="form-control btn btn-success div-btn">Pick : <span id="totalStocksCount">@sessionData.TotalPickCount</span></div>
+            <div id="selectedStocks" style="cursor:pointer;" class="form-control btn btn-success div-btn @(sessionData.AlreadyParticipated?"disable-element":"")">Pick : <span id="totalStocksCount">@sessionData.TotalPickCount</span></div>
         </div>
     </div>
 
@@ -56,7 +47,7 @@
                             <div style="display:none;" id="hidden-play-div_@(keyName)"> @item.Key=@item.Value=@profitPercentage </div>
                         }
                     </p>
-                    <p id="Add_@(keyName)" class="card-expando" data-toggle="modal" data-target="#addStockModal">
+                    <p id="Add_@(keyName)" class="card-expando @(sessionData.AlreadyParticipated?"disable-element":"")" data-toggle="modal" data-target="#addStockModal">
                         <img class="image-div" src="~/images/add.png" />
                     </p>
                     <p id="Graph_@(item.Key)" class="graph-div">
@@ -65,8 +56,17 @@
                 </div>
             </div>
         </div>
+    }
 
+
+    @if (sessionData.AlreadyParticipated)
+    {
+        <a asp-action="Games" asp-controller="stocks" class="fixed-bottom btn btn-success btn-block custom-class">Portfolio</a>
+    }
+    else
+    {
         <button id="submitContest" class="fixed-bottom btn btn-success btn-block custom-class">Submit</button>
+
     }
 
     <!-- Modal -->
@@ -103,6 +103,42 @@
             </div>
         </div>
     </div>
+
+
+    //Remove Stocks
+    @*<div class="modal fade" id="removeStockModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalScrollableTitle" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-scrollable" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalScrollableTitle">Buy Stock</h5>
+                    </div>
+                    <div class="modal-body">
+                        <div id="buy-stock-div" class="card-contest-modal">
+                            <div class="container">
+                                <h3 id="StockName">ITC</h3>
+                                <div class="row-div">
+                                    <p id="stockCurrentPrice">319</p>
+                                    <p id="stockTrend" class="card-expando">2.5%</p>
+                                </div>
+
+                                <div>
+                                    <label>Qty.</label> <input id="stockQty" class="number-stock" type="number" placeholder="" autocorrect="off" min="1" step="1" autofocus="autofocus" nativeerror="true" staticlabel="true" animate="true" label="Qty.">
+                                </div>
+
+                                <div class="row-div">
+                                    <p> Margin Used :  </p>
+                                    <p id="margin-used">0</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        <button type="button" id="addStockBtn" class="btn btn-primary">Add</button>
+                    </div>
+                </div>
+            </div>
+        </div>*@
 
 
 
@@ -221,6 +257,9 @@
             background: #1abc9c;
             color: white;
             font-size: 30px;
+            margin-top: -4%;
+            margin-left: -5%;
+            margin-right: -5%;
         }
     </style>
 }
