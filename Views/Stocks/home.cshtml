@@ -39,7 +39,7 @@
                                     <p>Win 1L</p>
                                     @if (sessionData.AlreadyParticipated)
                                     {
-                                        <p style="margin-left:auto">Already Participated</p>
+                                        <p style="margin-left:auto">Rank : @sessionData.Team.rank</p>
                                         <p class="card-expando">@sessionData.Team.teamscore.totalbuyamount/100000</p>
                                     }
                                     else
