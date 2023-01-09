@@ -18,7 +18,7 @@
             <a asp-controller="Stocks" asp-action="Games" class="form-control btn btn-success div-btn">My Games</a>
         </div>
     </div>
-    if (!Model.isHoliday)
+    if (!Model.isHoliday && Model.contest.status=="success")
     {
         <div class="card-section">
             <div class="toggle-div" id="home-div">

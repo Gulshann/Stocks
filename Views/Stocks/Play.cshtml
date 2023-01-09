@@ -49,7 +49,7 @@
                             {
                                 keyName = item.Key.Replace(" ", "-");
                             }
-                            <div style="display:none;" id="hidden-play-div_@(keyName)"> @item.Key=@item.Value=@profitPercentage </div>
+                            <div style="display:none;" id="hidden-play-div_@(keyName)">@item.Key=@item.Value=@profitPercentage </div>
                         }
                     </p>
                     <p id="Add_@(keyName)" class="card-expando @(sessionData.AlreadyParticipated?"disable-element":"")" data-toggle="modal" data-target="#addStockModal">

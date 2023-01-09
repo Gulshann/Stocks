@@ -32,6 +32,8 @@
 
         $(document).ready(function () {
 
+            var deselected = {};
+
             $("#mega-contest").click(function () {
                 window.location.href = playUrl;
             });
@@ -56,6 +58,17 @@
                  stockeCurrentPrice = selectedValues[1];
                 var stockTrend = selectedValues[2];
 
+                if (stockName in buyinfo) {
+                    var qty = buyinfo[stockName]["quantity"];
+                    var stockPrice = parseInt($("#stockCurrentPrice")[0].innerHTML);
+                    $("#stockQty").val(qty);
+                    $("#margin-used")[0].innerHTML = parseInt(stockPrice) * qty;
+
+                    deselected.stockName = stockName;
+                    deselected.price = stockeCurrentPrice;
+                    deselected.qty = qty;
+                }
+
                 $("#StockName")[0].innerHTML = stockName;
                 $("#stockCurrentPrice")[0].innerHTML = stockeCurrentPrice;
                 $("#stockTrend")[0].innerHTML = stockTrend+"%";
@@ -76,6 +89,7 @@
             });
 
             $('#stockQty').on('input', function () {
+
                 var currentStockPrice = $("#stockCurrentPrice")[0].innerHTML;
                 var qty = $("#stockQty").val();
                 $("#margin-used")[0].innerHTML = currentStockPrice * qty;
@@ -85,19 +99,51 @@
             $("#addStockBtn").click(function () {
                 // Update the UI part
                 var newStocksSelectedQty = $("#stockQty").val();
-                var newStocksTotalPrice = $("#margin-used")[0].innerHTML;
 
+                if (newStocksSelectedQty == '' || newStocksSelectedQty == undefined) {
+                    newStocksSelectedQty = 0;
+                }
+
+                var newStocksTotalPrice = $("#margin-used")[0].innerHTML;
                 $("#stockQty").val(0);
+                var selectedStockCout = parseInt(newStocksSelectedQty)
+
+                if (stockName in buyinfo && deselected != null && deselected.stockName === stockName) {
+                    let marginValue = deselected.qty * deselected.price;
+
+                    $("#remainingBudget")[0].innerHTML = parseInt($("#remainingBudget")[0].innerHTML) + parseInt(marginValue);
+                    $("#totalStocksCount")[0].innerHTML = $("#totalStocksCount")[0].innerHTML - deselected.qty;
+                    deselected = {};
+                }
 
                 $("#remainingBudget")[0].innerHTML = parseInt($("#remainingBudget")[0].innerHTML) - parseInt(newStocksTotalPrice);
 
                 $("#totalStocksCount")[0].innerHTML = parseInt($("#totalStocksCount")[0].innerHTML) + parseInt(newStocksSelectedQty);
 
+                if (parseInt($("#remainingBudget")[0].innerHTML) < 0) {
+                    $("#remainingBudget")[0].innerHTML = 100000;
+                    $("#totalStocksCount")[0].innerHTML = 0;
+                    alert("Margin Exhausted");
+                    orderJSON = {};
+                    selection = {};
+                    buyinfo = {};
+                    $('#addStockModal').modal('hide');
+                    return;
+                }
                 //Form JSON
                 // Stock Name, Stock Price, Stock Count
 
-                var singleStock = { "buyprice": parseInt(stockeCurrentPrice), "quantity": parseInt(newStocksSelectedQty), "amount": parseInt(parseInt(newStocksSelectedQty) * parseInt(stockeCurrentPrice)) };
-                buyinfo[stockName] = singleStock;
+
+                // if already added stocks removed
+                if (selectedStockCout < 1) {
+                    if (stockName in buyinfo) {
+                        delete buyinfo[stockName];
+                    }
+                }
+                else {
+                    var singleStock = { "buyprice": parseInt(stockeCurrentPrice), "quantity": parseInt(newStocksSelectedQty), "amount": parseInt(parseInt(newStocksSelectedQty) * parseInt(stockeCurrentPrice)) };
+                    buyinfo[stockName] = singleStock;
+                }
 
                 // Call the post method to insert
 
